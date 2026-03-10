@@ -6,12 +6,17 @@ RUN apk add --no-cache \
     unzip \
     libzip-dev \
     oniguruma-dev \
+    autoconf \
+    g++ \
+    make \
     && docker-php-ext-install \
-    pdo_pgsql \
-    pgsql \
-    zip \
-    mbstring \
-    bcmath
+        pdo_pgsql \
+        pgsql \
+        zip \
+        mbstring \
+        bcmath \
+    && pecl install redis \
+    && docker-php-ext-enable redis
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
