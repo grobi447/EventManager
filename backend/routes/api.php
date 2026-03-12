@@ -29,6 +29,7 @@ Route::prefix('v1')->group(function () {
 
         // Helpdesk
         Route::prefix('helpdesk')->group(function () {
+            Route::get('chats/my', [HelpdeskController::class, 'myChats']);
             Route::post('chats', [HelpdeskController::class, 'startChat']);
             Route::post('chats/{chat}/messages', [HelpdeskController::class, 'sendMessage']);
             Route::post('chats/{chat}/transfer', [HelpdeskController::class, 'transfer']);

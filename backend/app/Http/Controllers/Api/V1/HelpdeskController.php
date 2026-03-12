@@ -20,7 +20,7 @@ class HelpdeskController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $chat,
+            'data' => $chat,
             'message' => 'Chat started successfully.',
         ], 201);
     }
@@ -52,19 +52,19 @@ class HelpdeskController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $chat,
+            'data' => $chat,
             'message' => 'Transferred to human agent.',
         ]);
     }
 
     public function agentChats(Request $request): JsonResponse
     {
-        if (!auth()->user()->isAgent()) {
+        if (! auth()->user()->isAgent()) {
             return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
         }
 
-        $chats = Chat::whereIn('status', ['pending', 'active'])
-            ->with(['user', 'messages' => fn($q) => $q->latest('created_at')->limit(1)])
+        $chats = Chat::whereIn('status', ['pending', 'active', 'closed'])
+            ->with(['user', 'messages' => fn ($q) => $q->latest('created_at')->limit(1)])
             ->latest()
             ->get();
 
@@ -75,7 +75,7 @@ class HelpdeskController extends Controller
     {
         $user = auth()->user();
 
-        if ($chat->user_id !== $user->id && !$user->isAgent()) {
+        if ($chat->user_id !== $user->id && ! $user->isAgent()) {
             return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
         }
 
@@ -86,7 +86,7 @@ class HelpdeskController extends Controller
 
     public function agentRespond(Request $request, Chat $chat): JsonResponse
     {
-        if (!auth()->user()->isAgent()) {
+        if (! auth()->user()->isAgent()) {
             return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
         }
 
@@ -101,12 +101,25 @@ class HelpdeskController extends Controller
     {
         $user = auth()->user();
 
-        if ($chat->user_id !== $user->id && !$user->isAgent()) {
+        if ($chat->user_id !== $user->id && ! $user->isAgent()) {
             return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
         }
 
         $chat = $this->helpdeskService->closeChat($chat);
 
         return response()->json(['success' => true, 'data' => $chat, 'message' => 'Chat closed.']);
+    }
+
+    public function myChats(Request $request): JsonResponse
+    {
+        $chats = Chat::where('user_id', auth()->id())
+            ->with(['messages' => fn ($q) => $q->orderBy('created_at')])
+            ->latest()
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $chats,
+        ]);
     }
 }
