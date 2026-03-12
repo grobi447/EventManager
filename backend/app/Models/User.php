@@ -39,7 +39,7 @@ class User extends Authenticatable implements JWTSubject
     
         $this->notify(new ResetPassword($token));
     }
-    
+
     // JWT required methods
     public function getJWTIdentifier(): mixed
     {
@@ -56,14 +56,9 @@ class User extends Authenticatable implements JWTSubject
     }
 
     // Role helpers
-    public function isAdmin(): bool
-    {
-        return $this->role === 'admin';
-    }
-
     public function isAgent(): bool
     {
-        return $this->role === 'helpdesk_agent' || $this->isAdmin();
+        return $this->role === 'helpdesk_agent';
     }
 
     // Relationships

@@ -19,6 +19,6 @@ class EventPolicy
 
     public function delete(User $user, Event $event): bool
     {
-        return $user->id === $event->user_id || $user->isAdmin();
+        return $user->id === $event->user_id;
     }
 }
