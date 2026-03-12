@@ -4,26 +4,32 @@ namespace App\Services;
 
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
-use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AuthService
 {
-    public function login(string $email, string $password): array
+    public function login(array $credentials): array
     {
-        $credentials = ['email' => $email, 'password' => $password];
-
-        if (!$token = Auth::attempt($credentials)) {
+        if (! $token = auth('api')->attempt($credentials)) {
             throw new \Exception('Invalid credentials', 401);
         }
 
-        $user = Auth::user();
+        $user = auth('api')->user();
+
+        if ($user->mfa_enabled) {
+            auth('api')->logout();
+
+            return [
+                'mfa_required' => true,
+                'email' => $user->email,
+            ];
+        }
 
         return [
-            'user'         => $user,
+            'mfa_required' => false,
             'access_token' => $token,
-            'token_type'   => 'bearer',
-            'expires_in'   => Auth::factory()->getTTL() * 60,
-            'mfa_required' => $user->mfa_enabled,
+            'token_type' => 'bearer',
+            'expires_in' => config('jwt.ttl') * 60,
+            'user' => $user,
         ];
     }
 
@@ -38,8 +44,8 @@ class AuthService
 
         return [
             'access_token' => $token,
-            'token_type'   => 'bearer',
-            'expires_in'   => Auth::factory()->getTTL() * 60,
+            'token_type' => 'bearer',
+            'expires_in' => Auth::factory()->getTTL() * 60,
         ];
     }
 

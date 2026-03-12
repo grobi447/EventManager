@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\AuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use PragmaRX\Google2FA\Google2FA;
 
 class AuthController extends Controller
 {
@@ -16,26 +17,26 @@ class AuthController extends Controller
     public function login(Request $request): JsonResponse
     {
         $request->validate([
-            'email'    => 'required|email',
+            'email' => 'required|email',
             'password' => 'required|string',
         ]);
 
-        try {
-            $result = $this->authService->login(
-                $request->email,
-                $request->password
-            );
+        $result = $this->authService->login($request->only('email', 'password'));
 
+        if ($result['mfa_required']) {
             return response()->json([
                 'success' => true,
-                'data'    => $result,
+                'mfa_required' => true,
+                'email' => $result['email'],
+                'message' => 'MFA verification required.',
             ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Invalid credentials',
-            ], 401);
         }
+
+        return response()->json([
+            'success' => true,
+            'data' => $result,
+            'message' => 'Login successful.',
+        ]);
     }
 
     public function logout(): JsonResponse
@@ -55,7 +56,7 @@ class AuthController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data'    => $result,
+                'data' => $result,
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -69,7 +70,45 @@ class AuthController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data'    => $this->authService->me(),
+            'data' => $this->authService->me(),
+        ]);
+    }
+
+    public function loginWithMfa(Request $request): JsonResponse
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required|string',
+            'otp' => 'required|string',
+        ]);
+
+        $credentials = $request->only('email', 'password');
+
+        if (! $token = auth('api')->attempt($credentials)) {
+            return response()->json(['success' => false, 'message' => 'Invalid credentials.'], 401);
+        }
+
+        $user = auth('api')->user();
+        $mfaSecret = $user->mfaSecret;
+
+        $google2fa = new Google2FA;
+        $valid = $google2fa->verifyKey($mfaSecret->secret, $request->otp);
+
+        if (! $valid) {
+            auth('api')->logout();
+
+            return response()->json(['success' => false, 'message' => 'Invalid OTP.'], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'access_token' => $token,
+                'token_type' => 'bearer',
+                'expires_in' => config('jwt.ttl') * 60,
+                'user' => $user,
+            ],
+            'message' => 'Login successful.',
         ]);
     }
 }

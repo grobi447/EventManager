@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\EventController;
 use App\Http\Controllers\Api\V1\HelpdeskController;
+use App\Http\Controllers\Api\V1\MfaController;
 use App\Http\Controllers\Api\V1\PasswordResetController;
 use Illuminate\Support\Facades\Route;
 
@@ -14,6 +15,8 @@ Route::prefix('v1')->group(function () {
         Route::post('refresh', [AuthController::class, 'refresh']);
         Route::post('forgot-password', [PasswordResetController::class, 'forgotPassword']);
         Route::post('reset-password', [PasswordResetController::class, 'resetPassword']);
+        Route::post('login-mfa', [AuthController::class, 'loginWithMfa']);
+
     });
 
     // Protected routes
@@ -39,6 +42,12 @@ Route::prefix('v1')->group(function () {
             Route::get('chats/{chat}/messages', [HelpdeskController::class, 'getMessages']);
         });
 
+        // MFA
+        Route::prefix('mfa')->group(function () {
+            Route::get('setup', [MfaController::class, 'setup']);
+            Route::post('enable', [MfaController::class, 'enable']);
+            Route::post('disable', [MfaController::class, 'disable']);
+            Route::post('verify', [MfaController::class, 'verify']);
+        });
     });
-
 });
