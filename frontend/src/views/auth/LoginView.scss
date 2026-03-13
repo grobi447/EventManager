@@ -1,0 +1,65 @@
+.login {
+    &__container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #09090b;
+    }
+
+    &__card {
+        width: 100%;
+        max-width: 400px;
+    }
+
+    &__title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #fafafa;
+        margin-bottom: 0.25rem;
+    }
+
+    &__subtitle {
+        font-size: 0.875rem;
+        color: #71717a;
+    }
+
+    &__form {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    &__field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    &__forgot {
+        font-size: 0.75rem;
+        color: #71717a;
+        text-align: right;
+        text-decoration: none;
+
+        &:hover {
+            color: #fafafa;
+        }
+    }
+
+    &__error {
+        font-size: 0.875rem;
+        color: #f87171;
+        text-align: center;
+    }
+
+    &__submit {
+        width: 100%;
+    }
+
+    &__mfa-info {
+        font-size: 0.875rem;
+        color: #71717a;
+        text-align: center;
+    }
+}
