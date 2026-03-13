@@ -32,6 +32,31 @@ class HelpdeskService
         if ($chat->status === 'ai') {
             $aiResponse = $this->getAiResponse($chat, $content);
 
+            if (str_contains($aiResponse, 'TRANSFER_REQUESTED')) {
+                $aiResponse = str_replace('TRANSFER_REQUESTED', '', $aiResponse);
+                $aiResponse = trim($aiResponse) ?: 'I will transfer you to a human agent now. Please wait.';
+
+                Message::create([
+                    'chat_id' => $chat->id,
+                    'sender_type' => 'ai',
+                    'sender_id' => null,
+                    'content' => $aiResponse,
+                ]);
+
+                $this->transferToAgent($chat);
+
+                $context = $chat->ai_context ?? [];
+                $context[] = ['role' => 'user', 'content' => $content];
+                $context[] = ['role' => 'ai',   'content' => $aiResponse];
+                $chat->update(['ai_context' => $context]);
+
+                return [
+                    'user_message' => $userMessage,
+                    'ai_message' => ['content' => $aiResponse],
+                    'transferred' => true,
+                ];
+            }
+
             $aiMessage = Message::create([
                 'chat_id' => $chat->id,
                 'sender_type' => 'ai',
@@ -47,6 +72,7 @@ class HelpdeskService
             return [
                 'user_message' => $userMessage,
                 'ai_message' => $aiMessage,
+                'transferred' => false,
             ];
         }
 
@@ -108,8 +134,8 @@ class HelpdeskService
 
         try {
             $geminiChat = Gemini::generativeModel(model: 'gemini-2.5-flash')
-            ->withSystemInstruction('You are a helpful customer support agent for EventManager, a web application for managing personal events. Users can create events with a title, date/time, and optional description. They can list, update, and delete their events. Help users with questions specifically about using EventManager. If the user explicitly asks for a human agent, say TRANSFER_REQUESTED.')
-            ->startChat(history: $history);
+                ->withSystemInstruction('You are a helpful customer support agent for EventManager, a web application for managing personal events. Users can create events with a title, date/time, and optional description. They can list, update, and delete their events. Help users with questions specifically about using EventManager. If the user explicitly asks for a human agent, say TRANSFER_REQUESTED.')
+                ->startChat(history: $history);
             $response = $geminiChat->sendMessage($userMessage);
 
             return $response->text();
