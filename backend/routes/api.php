@@ -21,6 +21,7 @@ Route::prefix('v1')->group(function () {
         Route::post('forgot-password', [PasswordResetController::class, 'forgotPassword']);
         Route::post('reset-password', [PasswordResetController::class, 'resetPassword']);
         Route::post('login-mfa', [AuthController::class, 'loginWithMfa']);
+        Route::post('register', [AuthController::class, 'register']);
     });
 
     // Protected routes
