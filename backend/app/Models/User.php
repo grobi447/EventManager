@@ -2,11 +2,11 @@
 
 namespace App\Models;
 
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Tymon\JWTAuth\Contracts\JWTSubject;
-use Illuminate\Auth\Notifications\ResetPassword;
 
 class User extends Authenticatable implements JWTSubject
 {
@@ -29,15 +29,21 @@ class User extends Authenticatable implements JWTSubject
     {
         return [
             'email_verified_at' => 'datetime',
-            'password'          => 'hashed',
-            'mfa_enabled'       => 'boolean',
+            'password' => 'hashed',
+            'mfa_enabled' => 'boolean',
         ];
     }
+
     public function sendPasswordResetNotification($token): void
     {
-        $url = config('app.frontend_url') . '/reset-password?token=' . $token . '&email=' . urlencode($this->email);
-    
+        $url = config('app.frontend_url').'/reset-password?token='.$token.'&email='.urlencode($this->email);
+
         $this->notify(new ResetPassword($token));
+    }
+
+    public function joinedEvents()
+    {
+        return $this->belongsToMany(Event::class, 'event_attendees')->withTimestamps();
     }
 
     // JWT required methods
@@ -50,8 +56,8 @@ class User extends Authenticatable implements JWTSubject
     {
         return [
             'email' => $this->email,
-            'role'  => $this->role,
-            'name'  => $this->name,
+            'role' => $this->role,
+            'name' => $this->name,
         ];
     }
 

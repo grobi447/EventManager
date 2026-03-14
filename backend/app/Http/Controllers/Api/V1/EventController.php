@@ -17,16 +17,19 @@ class EventController extends Controller
 
     public function index(): JsonResponse
     {
-        $events = $this->eventService->getUserEvents(auth()->user());
+        $events = Event::with(['user:id,name'])
+            ->withCount('attendees')
+            ->orderBy('occurs_at')
+            ->paginate(15);
 
         return response()->json([
             'success' => true,
-            'data'    => $events->items(),
-            'meta'    => [
-                'total'        => $events->total(),
-                'per_page'     => $events->perPage(),
+            'data' => $events->items(),
+            'meta' => [
+                'total' => $events->total(),
+                'per_page' => $events->perPage(),
                 'current_page' => $events->currentPage(),
-                'last_page'    => $events->lastPage(),
+                'last_page' => $events->lastPage(),
             ],
         ]);
     }
@@ -40,7 +43,7 @@ class EventController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $event,
+            'data' => $event,
             'message' => 'Event created successfully',
         ], 201);
     }
@@ -51,7 +54,7 @@ class EventController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $event,
+            'data' => $event,
         ]);
     }
 
@@ -66,7 +69,7 @@ class EventController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $event,
+            'data' => $event,
             'message' => 'Event updated successfully',
         ]);
     }

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\EventAttendeeController;
 use App\Http\Controllers\Api\V1\EventController;
 use App\Http\Controllers\Api\V1\HelpdeskController;
 use App\Http\Controllers\Api\V1\MfaController;
@@ -9,6 +10,10 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
 
+    // Public routes
+    Route::get('events', [EventController::class, 'index']);
+    Route::get('events/{event}', [EventController::class, 'show']);
+
     // Public auth routes
     Route::prefix('auth')->group(function () {
         Route::post('login', [AuthController::class, 'login']);
@@ -16,7 +21,6 @@ Route::prefix('v1')->group(function () {
         Route::post('forgot-password', [PasswordResetController::class, 'forgotPassword']);
         Route::post('reset-password', [PasswordResetController::class, 'resetPassword']);
         Route::post('login-mfa', [AuthController::class, 'loginWithMfa']);
-
     });
 
     // Protected routes
@@ -28,7 +32,12 @@ Route::prefix('v1')->group(function () {
         });
 
         // Events
-        Route::apiResource('events', EventController::class);
+        Route::post('events', [EventController::class, 'store']);
+        Route::put('events/{event}', [EventController::class, 'update']);
+        Route::delete('events/{event}', [EventController::class, 'destroy']);
+        Route::get('events/joined', [EventAttendeeController::class, 'joinedEvents']);
+        Route::post('events/{event}/join', [EventAttendeeController::class, 'join']);
+        Route::delete('events/{event}/leave', [EventAttendeeController::class, 'leave']);
 
         // Helpdesk
         Route::prefix('helpdesk')->group(function () {
