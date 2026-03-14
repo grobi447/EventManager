@@ -48,5 +48,10 @@ export const useAuthStore = defineStore('auth', () => {
         localStorage.removeItem('user')
     }
 
-    return { token, user, mfaPending, isAuthenticated, isAgent, login, loginWithMfa, logout, clearAuth }
+    async function register(data: { name: string; email: string; password: string; password_confirmation: string }) {
+    const response = await http.post<any>('/auth/register', data)
+    setAuth(response.data.access_token, response.data.user)
+}
+
+    return { token, user, mfaPending, isAuthenticated, isAgent, login, loginWithMfa, logout, register, clearAuth }
 })

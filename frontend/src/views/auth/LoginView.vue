@@ -59,7 +59,7 @@ function redirectAfterLogin() {
   if (authStore.isAgent) {
     router.push('/helpdesk')
   } else {
-    router.push('/events')
+    router.push('/')
   }
 }
 </script>

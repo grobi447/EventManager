@@ -1,0 +1,57 @@
+.register {
+  &__container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: hsl(var(--background));
+  }
+
+  &__card {
+    width: 100%;
+    max-width: 400px;
+  }
+
+  &__title {
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+
+  &__subtitle {
+    font-size: 0.875rem;
+    color: hsl(var(--muted-foreground));
+  }
+
+  &__form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  &__field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  &__error {
+    font-size: 0.875rem;
+    color: hsl(var(--destructive));
+    text-align: center;
+  }
+
+  &__submit {
+    width: 100%;
+  }
+
+  &__login {
+    font-size: 0.875rem;
+    color: hsl(var(--muted-foreground));
+    text-align: center;
+
+    a {
+      color: hsl(var(--foreground));
+      text-decoration: underline;
+    }
+  }
+}
