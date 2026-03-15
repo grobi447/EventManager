@@ -17,14 +17,22 @@ class EventController extends Controller
 
     public function index(): JsonResponse
     {
+        $userId = auth('api')->id();
+
         $events = Event::with(['user:id,name'])
             ->withCount('attendees')
             ->orderBy('occurs_at')
             ->paginate(15);
 
+        $data = $events->map(function ($event) use ($userId) {
+            return array_merge($event->toArray(), [
+                'is_joined' => $userId ? $event->attendees()->where('user_id', $userId)->exists() : false,
+            ]);
+        });
+
         return response()->json([
             'success' => true,
-            'data' => $events->items(),
+            'data' => $data,
             'meta' => [
                 'total' => $events->total(),
                 'per_page' => $events->perPage(),
