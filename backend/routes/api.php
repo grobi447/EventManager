@@ -12,7 +12,6 @@ Route::prefix('v1')->group(function () {
 
     // Public routes
     Route::get('events', [EventController::class, 'index']);
-    Route::get('events/{event}', [EventController::class, 'show']);
 
     // Public auth routes
     Route::prefix('auth')->group(function () {
@@ -35,9 +34,9 @@ Route::prefix('v1')->group(function () {
         // Events
         Route::post('events', [EventController::class, 'store']);
         Route::get('events/my', [EventController::class, 'myEvents']);
+        Route::get('events/joined', [EventAttendeeController::class, 'joinedEvents']);
         Route::put('events/{event}', [EventController::class, 'update']);
         Route::delete('events/{event}', [EventController::class, 'destroy']);
-        Route::get('events/joined', [EventAttendeeController::class, 'joinedEvents']);
         Route::post('events/{event}/join', [EventAttendeeController::class, 'join']);
         Route::delete('events/{event}/leave', [EventAttendeeController::class, 'leave']);
 

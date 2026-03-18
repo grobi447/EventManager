@@ -57,6 +57,7 @@ export const useEventsStore = defineStore('events', () => {
       event.attendees_count--
       event.is_joined = false
     }
+    joinedEvents.value = joinedEvents.value.filter(e => e.id !== eventId)
   }
 
   async function createEvent(data: { title: string; occurs_at: string; description?: string }) {
