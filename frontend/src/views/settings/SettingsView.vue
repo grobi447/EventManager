@@ -2,11 +2,11 @@
 import { ref, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth.store'
 import { http } from '@/api/http'
+import QRCode from 'qrcode'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
 import './SettingsView.scss'
 
 const authStore = useAuthStore()
@@ -19,7 +19,8 @@ const passwordSuccess = ref('')
 const passwordLoading = ref(false)
 
 const mfaEnabled = computed(() => authStore.user?.mfa_enabled || false)
-const mfaSetupData = ref<{ secret: string } | null>(null)
+const mfaSetupData = ref<{ secret: string; qr_code_url: string } | null>(null)
+const qrCodeImage = ref('')
 const mfaOtp = ref('')
 const mfaDisableOtp = ref('')
 const mfaError = ref('')
@@ -27,6 +28,7 @@ const mfaSuccess = ref('')
 const mfaLoading = ref(false)
 const backupCodes = ref<string[]>([])
 const showDisableForm = ref(false)
+const useBackupCode = ref(false)
 
 async function handlePasswordChange() {
   passwordError.value = ''
@@ -55,20 +57,20 @@ async function handlePasswordChange() {
   }
 }
 
-async function handleMfaToggle() {
-  if (mfaEnabled.value) {
-    showDisableForm.value = true
-  } else {
-    mfaLoading.value = true
-    mfaError.value = ''
-    try {
-      const response = await http.get<any>('/mfa/setup')
-      mfaSetupData.value = response.data
-    } catch (e: any) {
-      mfaError.value = e.message || 'Failed to setup MFA'
-    } finally {
-      mfaLoading.value = false
-    }
+async function handleEnableMfa() {
+  mfaError.value = ''
+  mfaSuccess.value = ''
+  backupCodes.value = []
+  showDisableForm.value = false
+  mfaLoading.value = true
+  try {
+    const response = await http.get<any>('/mfa/setup')
+    mfaSetupData.value = response.data
+    qrCodeImage.value = await QRCode.toDataURL(response.data.qr_code_url)
+  } catch (e: any) {
+    mfaError.value = e.message || 'Failed to setup MFA'
+  } finally {
+    mfaLoading.value = false
   }
 }
 
@@ -82,6 +84,7 @@ async function handleMfaEnable() {
     })
     backupCodes.value = response.data.backup_codes
     mfaSetupData.value = null
+    qrCodeImage.value = ''
     mfaOtp.value = ''
     mfaSuccess.value = 'MFA enabled successfully'
     if (authStore.user) authStore.user.mfa_enabled = true
@@ -92,6 +95,16 @@ async function handleMfaEnable() {
   }
 }
 
+function handleShowDisable() {
+  mfaSetupData.value = null
+  qrCodeImage.value = ''
+  backupCodes.value = []
+  mfaSuccess.value = ''
+  mfaError.value = ''
+  useBackupCode.value = false
+  showDisableForm.value = true
+}
+
 async function handleMfaDisable() {
   mfaError.value = ''
   mfaLoading.value = true
@@ -100,6 +113,7 @@ async function handleMfaDisable() {
     mfaSuccess.value = 'MFA disabled successfully'
     showDisableForm.value = false
     mfaDisableOtp.value = ''
+    useBackupCode.value = false
     if (authStore.user) authStore.user.mfa_enabled = false
   } catch (e: any) {
     mfaError.value = e.message || 'Invalid OTP'
@@ -154,22 +168,44 @@ async function handleMfaDisable() {
                 {{ mfaEnabled ? 'MFA is currently enabled' : 'Add extra security to your account' }}
               </span>
             </div>
-            <Switch :checked="mfaEnabled" @update:checked="handleMfaToggle" />
+            <Button
+              v-if="!mfaEnabled"
+              size="sm"
+              @click="handleEnableMfa"
+              :disabled="mfaLoading || !!mfaSetupData"
+            >
+              Enable MFA
+            </Button>
+            <Button
+              v-else
+              size="sm"
+              variant="destructive"
+              @click="handleShowDisable"
+              :disabled="mfaLoading || showDisableForm"
+            >
+              Disable MFA
+            </Button>
           </div>
 
           <div v-if="mfaSetupData" class="settings-form__mfa-setup">
             <p class="text-sm text-muted-foreground">
-              Enter this secret key in your authenticator app (Google Authenticator, Authy):
+              Scan this QR code with your authenticator app:
             </p>
-            <div class="settings-form__secret">{{ mfaSetupData.secret }}</div>
+            <div style="display: flex; justify-content: center;">
+              <img :src="qrCodeImage" alt="MFA QR Code" style="width: 200px; height: 200px;" />
+            </div>
+            <p class="text-sm text-muted-foreground text-center">
+              Or enter manually: <strong>{{ mfaSetupData.secret }}</strong>
+            </p>
             <div class="settings-form__field">
               <Label for="mfa-otp">Enter the 6-digit code to confirm</Label>
               <Input id="mfa-otp" v-model="mfaOtp" placeholder="000000" maxlength="6" />
             </div>
             <p v-if="mfaError" class="settings-form__error">{{ mfaError }}</p>
             <div class="settings-form__footer">
+              <Button variant="outline" @click="mfaSetupData = null">Cancel</Button>
               <Button @click="handleMfaEnable" :disabled="mfaLoading">
-                {{ mfaLoading ? 'Verifying...' : 'Enable MFA' }}
+                {{ mfaLoading ? 'Verifying...' : 'Confirm' }}
               </Button>
             </div>
           </div>
@@ -185,9 +221,23 @@ async function handleMfaDisable() {
 
           <div v-if="showDisableForm" class="settings-form__mfa-setup">
             <div class="settings-form__field">
-              <Label for="disable-otp">Enter your 6-digit code to disable MFA</Label>
-              <Input id="disable-otp" v-model="mfaDisableOtp" placeholder="000000" maxlength="6" />
+              <Label for="disable-otp">
+                {{ useBackupCode ? 'Enter backup code' : 'Enter your 6-digit code' }}
+              </Label>
+              <Input
+                id="disable-otp"
+                v-model="mfaDisableOtp"
+                :placeholder="useBackupCode ? 'XXXXXXXX' : '000000'"
+                :maxlength="useBackupCode ? 8 : 6"
+              />
             </div>
+            <button
+              type="button"
+              class="settings-form__link"
+              @click="useBackupCode = !useBackupCode; mfaDisableOtp = ''"
+            >
+              {{ useBackupCode ? 'Use authenticator code instead' : 'Use backup code instead' }}
+            </button>
             <p v-if="mfaError" class="settings-form__error">{{ mfaError }}</p>
             <div class="settings-form__footer">
               <Button variant="outline" @click="showDisableForm = false">Cancel</Button>

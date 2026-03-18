@@ -20,6 +20,13 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 
     const data = await response.json()
 
+    if (response.status === 401) {
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+        window.location.href = '/login'
+        throw data
+    }
+
     if (!response.ok) {
         throw data
     }

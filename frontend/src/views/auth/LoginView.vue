@@ -24,6 +24,7 @@ const otp = ref('')
 const error = ref('')
 const loading = ref(false)
 const showMfa = ref(false)
+const useBackupCode = ref(false)
 
 const showForgotDialog = ref(false)
 const forgotEmail = ref('')
@@ -117,11 +118,27 @@ function redirectAfterLogin() {
           </template>
 
           <template v-else>
-            <p class="login__mfa-info">Open your authenticator app and enter the 6-digit code.</p>
+            <p class="login__mfa-info">
+              {{ useBackupCode ? 'Enter one of your backup codes.' : 'Open your authenticator app and enter the 6-digit code.' }}
+            </p>
             <div class="login__field">
-              <Label for="otp">Authentication Code</Label>
-              <Input id="otp" v-model="otp" type="text" placeholder="000000" maxlength="6" required />
+              <Label for="otp">{{ useBackupCode ? 'Backup Code' : 'Authentication Code' }}</Label>
+              <Input
+                id="otp"
+                v-model="otp"
+                type="text"
+                :placeholder="useBackupCode ? 'XXXXXXXX' : '000000'"
+                :maxlength="useBackupCode ? 8 : 6"
+                required
+              />
             </div>
+            <button
+              type="button"
+              class="login__forgot"
+              @click="useBackupCode = !useBackupCode; otp = ''"
+            >
+              {{ useBackupCode ? 'Use authenticator code instead' : 'Use backup code instead' }}
+            </button>
           </template>
 
           <p v-if="error" class="login__error">{{ error }}</p>
