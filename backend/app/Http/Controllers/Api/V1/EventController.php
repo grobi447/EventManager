@@ -93,4 +93,20 @@ class EventController extends Controller
             'message' => 'Event deleted successfully',
         ]);
     }
+
+    public function myEvents(): JsonResponse
+{
+    $events = $this->eventService->getUserEvents(auth()->user());
+
+    return response()->json([
+        'success' => true,
+        'data'    => $events->items(),
+        'meta'    => [
+            'total'        => $events->total(),
+            'per_page'     => $events->perPage(),
+            'current_page' => $events->currentPage(),
+            'last_page'    => $events->lastPage(),
+        ],
+    ]);
+}
 }

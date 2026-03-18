@@ -24,3 +24,13 @@ export interface EventsResponse {
         last_page: number
     }
 }
+
+export interface CreateEventForm {
+    title: string
+    occurs_at: string
+    description?: string
+}
+
+export interface UpdateEventForm {
+    description: string
+}

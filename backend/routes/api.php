@@ -34,6 +34,7 @@ Route::prefix('v1')->group(function () {
 
         // Events
         Route::post('events', [EventController::class, 'store']);
+        Route::get('events/my', [EventController::class, 'myEvents']);
         Route::put('events/{event}', [EventController::class, 'update']);
         Route::delete('events/{event}', [EventController::class, 'destroy']);
         Route::get('events/joined', [EventAttendeeController::class, 'joinedEvents']);

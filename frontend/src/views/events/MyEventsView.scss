@@ -1,0 +1,97 @@
+.my-events {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+
+    &__header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 2rem;
+    }
+
+    &__title {
+        font-size: 2rem;
+        font-weight: 700;
+    }
+
+    &__empty {
+        text-align: center;
+        padding: 4rem 0;
+        color: hsl(var(--muted-foreground));
+    }
+
+    &__grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 1.5rem;
+    }
+}
+
+.my-event-card {
+    &__title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    &__meta {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        margin-top: 0.5rem;
+    }
+
+    &__meta-item {
+        font-size: 0.875rem;
+        color: hsl(var(--muted-foreground));
+    }
+
+    &__description {
+        font-size: 0.875rem;
+        color: hsl(var(--muted-foreground));
+        margin-top: 0.5rem;
+        min-height: 1.5rem;
+        line-height: 1.5;
+    }
+
+    &__footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid hsl(var(--border));
+    }
+
+    &__attendees {
+        font-size: 0.875rem;
+        color: hsl(var(--muted-foreground));
+    }
+
+    &__actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+}
+
+.event-dialog {
+    &__field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+
+        input[type="datetime-local"] {
+            color-scheme: dark;
+            display: inline-block;
+        }
+    }
+
+    &__footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+}

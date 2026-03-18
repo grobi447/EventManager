@@ -24,7 +24,7 @@ export const useEventsStore = defineStore('events', () => {
   async function fetchMyEvents() {
     loading.value = true
     try {
-      const response = await http.get<EventsResponse>('/events')
+      const response = await http.get<any>('/events/my')
       myEvents.value = response.data
     } finally {
       loading.value = false
