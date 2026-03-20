@@ -49,6 +49,7 @@ Route::prefix('v1')->group(function () {
             Route::post('chats/{chat}/transfer', [HelpdeskController::class, 'transfer']);
             Route::post('chats/{chat}/respond', [HelpdeskController::class, 'agentRespond']);
             Route::post('chats/{chat}/close', [HelpdeskController::class, 'closeChat']);
+            Route::delete('/chats/{chat}', [HelpdeskController::class, 'deleteChat']);
             Route::get('chats', [HelpdeskController::class, 'agentChats']);
             Route::get('chats/{chat}/messages', [HelpdeskController::class, 'getMessages']);
         });

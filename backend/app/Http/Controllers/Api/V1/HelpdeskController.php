@@ -122,4 +122,12 @@ class HelpdeskController extends Controller
             'data' => $chats,
         ]);
     }
+    public function deleteChat(Chat $chat): JsonResponse
+    {
+        if ($chat->user_id !== auth()->id()) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
+        }
+        $chat->delete();
+        return response()->json(['success' => true, 'message' => 'Chat deleted.']);
+    }
 }

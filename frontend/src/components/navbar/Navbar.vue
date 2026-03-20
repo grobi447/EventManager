@@ -21,7 +21,11 @@ function isActive(path: string) {
 }
 
 async function handleLogout() {
-  await authStore.logout()
+  try {
+    await authStore.logout()
+  } catch {
+    authStore.clearAuth()
+  }
   router.push('/login')
 }
 
@@ -62,12 +66,11 @@ function getInitials(name: string) {
           </RouterLink>
 
           <RouterLink
-            v-if="authStore.isAgent"
             to="/helpdesk"
             class="navbar__link"
             :class="{ 'navbar__link--active': isActive('/helpdesk') }"
           >
-            Helpdesk
+            {{ authStore.isAgent ? 'Agent Panel' : 'Support' }}
           </RouterLink>
         </template>
       </div>

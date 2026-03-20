@@ -134,7 +134,7 @@ class HelpdeskService
 
         try {
             $geminiChat = Gemini::generativeModel(model: 'gemini-2.5-flash')
-                ->withSystemInstruction('You are a helpful customer support agent for EventManager, a web application for managing personal events. Users can create events with a title, date/time, and optional description. They can list, update, and delete their events. Help users with questions specifically about using EventManager. If the user explicitly asks for a human agent, say TRANSFER_REQUESTED.')
+                ->withSystemInstruction(Content::parse('You are a helpful customer support agent for EventManager, a web application for managing personal events. Users can create events with a title, date/time, and optional description. They can list, update, and delete their events. Help users with questions specifically about using EventManager. If the user explicitly asks for a human agent, say TRANSFER_REQUESTED.'))
                 ->startChat(history: $history);
             $response = $geminiChat->sendMessage($userMessage);
 
