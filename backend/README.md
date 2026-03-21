@@ -1,59 +1,124 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# EventManager — Backend
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Laravel 11 RESTful API with JWT authentication, AI helpdesk, and MFA support.
 
-## About Laravel
+## Architecture
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+**Service Layer Pattern** — Controllers are thin, business logic lives in Services.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+```
+app/
+├── Http/
+│   ├── Controllers/
+│   │   ├── AuthController.php       # Login, register, password reset
+│   │   ├── EventController.php      # Events CRUD + join/leave
+│   │   ├── HelpdeskController.php   # Chat management
+│   │   └── MfaController.php        # MFA setup/enable/disable
+│   ├── Middleware/
+│   │   ├── SanitizeInput.php        # XSS protection
+│   │   └── SecurityHeaders.php      # OWASP headers
+│   └── Requests/                    # Form validation
+├── Models/
+│   ├── User.php
+│   ├── Event.php
+│   ├── Chat.php
+│   ├── Message.php
+│   └── MfaSecret.php
+├── Services/
+│   └── HelpdeskService.php          # Gemini AI integration
+└── Policies/
+    └── EventPolicy.php              # Authorization rules
+```
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Key Packages
 
-## Learning Laravel
+| Package | Purpose |
+|---------|---------|
+| tymon/jwt-auth | JWT token authentication |
+| pragmarx/google2fa-laravel | TOTP MFA |
+| bacon/bacon-qr-code | QR code generation |
+| google-gemini-php/laravel | Gemini AI client |
+| laravel/pint | Code formatting |
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## Environment Variables
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+```env
+# Database
+DB_CONNECTION=pgsql
+DB_HOST=postgres
+DB_PORT=5432
+DB_DATABASE=eventmanager
+DB_USERNAME=eventmanager
+DB_PASSWORD=secret
 
-## Laravel Sponsors
+# Redis
+REDIS_HOST=redis
+REDIS_PORT=6379
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+# JWT
+JWT_SECRET=                    # php artisan jwt:secret
+JWT_TTL=60
 
-### Premium Partners
+# Gemini AI
+GEMINI_API_KEY=                # https://ai.google.dev
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+# Mail (Mailpit dev)
+MAIL_HOST=mailpit
+MAIL_PORT=1025
+MAIL_FROM_ADDRESS=noreply@eventmanager.com
 
-## Contributing
+# Frontend URL (for reset links)
+FRONTEND_URL=http://localhost:5173
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## API Response Format
 
-## Code of Conduct
+All responses follow this structure:
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```json
+{
+  "success": true,
+  "data": { ... },
+  "message": "Optional message"
+}
+```
 
-## Security Vulnerabilities
+Error responses:
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```json
+{
+  "success": false,
+  "message": "Error description",
+  "errors": { "field": ["validation error"] }
+}
+```
 
-## License
+## Security
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- **Passwords** — bcrypt hashed via Laravel's Hash facade
+- **JWT** — stored in Redis blacklist on logout, auto-expire after 60 min
+- **Rate limiting** — `AppServiceProvider`: 5/min login, 60/min API
+- **Input** — `SanitizeInput` middleware runs `strip_tags` on all input
+- **Headers** — `SecurityHeaders` middleware adds OWASP-recommended headers
+- **SQL injection** — Eloquent ORM with parameter binding throughout
+- **MFA** — TOTP with 30-second window, 8 hex backup codes
+
+## Running Locally
+
+```bash
+# Inside Docker
+docker compose exec app php artisan migrate:fresh --seed
+docker compose exec app php artisan jwt:secret
+docker compose exec app php artisan config:clear
+docker compose exec app php artisan route:clear
+
+# Logs
+docker compose logs -f app
+```
+
+## Test Accounts (seeded)
+
+| Email | Password | Role |
+|-------|----------|------|
+| user@eventmanager.com | password | user |
+| agent@eventmanager.com | password | helpdesk_agent |

@@ -1,54 +1,96 @@
-# frontend
+# EventManager — Frontend
 
-This template should help get you started developing with Vue 3 in Vite.
+Vue 3 + TypeScript SPA with shadcn-vue, Pinia, and Tailwind CSS.
 
-## Recommended IDE Setup
+## Architecture
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+**Feature-based structure** — each feature has its own view, store, and types.
 
-## Recommended Browser Setup
-
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
-
-## Type Support for `.vue` Imports in TS
-
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
-
-```sh
-npm install
+```
+src/
+├── api/
+│   └── http.ts              # Fetch wrapper — auto Bearer token, 401 logout
+├── components/
+│   ├── ui/                  # shadcn-vue components
+│   └── Navbar/              # Navbar.vue + Navbar.scss
+├── layouts/
+│   └── AppLayout.vue        # Navbar wrapper
+├── router/
+│   └── index.ts             # Vue Router — auth guards
+├── stores/
+│   ├── auth.store.ts        # JWT token, user, login/logout
+│   ├── events.store.ts      # Events CRUD state
+│   └── helpdesk.store.ts    # Chat state, messages, agent chats
+├── types/
+│   ├── auth.types.ts
+│   ├── event.types.ts
+│   └── helpdesk.types.ts
+└── views/
+    ├── auth/
+    │   ├── LoginView.vue        # Login + MFA step + forgot password
+    │   ├── RegisterView.vue
+    │   └── ResetPasswordView.vue
+    ├── events/
+    │   ├── HomeView.vue         # Public event listing + join/leave
+    │   ├── MyEventsView.vue     # CRUD for own events
+    │   └── JoinedEventsView.vue
+    ├── helpdesk/
+    │   ├── HelpdeskView.vue     # AI chat (user) + Agent panel
+    │   └── HelpdeskView.scss
+    └── settings/
+        └── SettingsView.vue     # Password change + MFA setup
 ```
 
-### Compile and Hot-Reload for Development
+## Key Decisions
 
-```sh
+**Polling over WebSockets** — the helpdesk uses 3-second polling for simplicity within the project scope. For production, Laravel Reverb (WebSockets) would be the upgrade path.
+
+**Optimistic UI** — helpdesk messages appear immediately before the server responds, then get replaced with the real server-side message on response.
+
+**shadcn-vue** — installed locally (not via CLI) due to Node 24 compatibility. Tailwind CSS v3 used (v4 incompatible with shadcn-vue).
+
+**Voice input** — Web Speech API (`SpeechRecognition`), `en-EN` locale, microphone button in helpdesk chat.
+
+## Environment
+
+```env
+# frontend/.env.local
+VITE_API_URL=http://localhost/api/v1
+```
+
+## Running Locally
+
+```bash
+# Via Docker (recommended)
+docker compose up -d frontend
+
+# Direct
+cd frontend
+npm install
 npm run dev
 ```
 
-### Type-Check, Compile and Minify for Production
+## Router Guards
 
-```sh
-npm run build
+```
+/                    → public
+/login               → guest only (redirect to / if authenticated)
+/register            → guest only
+/reset-password      → guest only
+/my-events           → requiresAuth
+/joined-events       → requiresAuth
+/helpdesk            → requiresAuth (renders agent or user view based on role)
+/settings            → requiresAuth
 ```
 
-### Run Unit Tests with [Vitest](https://vitest.dev/)
+After login: agents redirect to `/helpdesk`, users redirect to `/`.
 
-```sh
-npm run test:unit
-```
+## State Management
 
-### Lint with [ESLint](https://eslint.org/)
+**auth.store** — persists token + user to localStorage. Exposes `isAuthenticated`, `isAgent`.
 
-```sh
-npm run lint
-```
+**helpdesk.store** — manages current chat, messages array, agent chats, selected chat for agents. Polling logic lives in the view component using `setInterval` + `onUnmounted` cleanup.
+
+## Shadcn Components Used
+
+button, card, input, label, form, toast, dialog, alert-dialog, dropdown-menu, avatar, separator, badge, navigation-menu, scroll-area, switch, tabs, textarea
