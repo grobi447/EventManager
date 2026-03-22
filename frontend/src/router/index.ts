@@ -7,6 +7,7 @@ import MyEventsView from '@/views/events/MyEventsView.vue'
 import JoinedEventsView from '@/views/events/JoinedEventsView.vue'
 import HelpdeskView from '@/views/helpdesk/HelpdeskView.vue'
 import SettingsView from '@/views/settings/SettingsView.vue'
+import ResetPasswordView from '@/views/auth/ResetPasswordView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -18,6 +19,8 @@ const router = createRouter({
     { path: '/joined-events', name: 'joined-events', component: JoinedEventsView, meta: { requiresAuth: true } },
     { path: '/helpdesk', name: 'helpdesk', component: HelpdeskView, meta: { requiresAuth: true } },
     { path: '/settings', name: 'settings', component: SettingsView, meta: { requiresAuth: true } },
+    { path: '/reset-password', name: 'reset-password', component: ResetPasswordView },
+
   ],
 })
 
